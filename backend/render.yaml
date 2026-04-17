@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: trustflow-finance-backend
+    runtime: node
+    region: singapore
+    buildCommand: npm ci
+    startCommand: node src/server.js
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: INTERNAL_JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRY
+        value: 7d
+      - key: INTERNAL_JWT_EXPIRY
+        value: 60
+      - key: FRONTEND_URL
+        sync: false
+      - key: CREDIT_BUREAU_API_URL
+        sync: false
+      - key: CREDIT_BUREAU_API_KEY
+        sync: false
+      - key: CRM_API_URL
+        sync: false
+      - key: CRM_API_KEY
+        sync: false

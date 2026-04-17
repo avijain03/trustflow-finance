@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://trustflow-finance-backend.onrender.com/api/$1" }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite"
+}
