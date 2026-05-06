@@ -29,7 +29,7 @@ async function execute({ message, sessionId, userId }) {
     const cleanMessage = sanitizeChatInput(message);
 
     // ── Step 2: Parse intent ──────────────────────────────────────────────
-    const intent = parseUserIntent(cleanMessage);
+    const { intent, answer } = await parseUserIntent(cleanMessage);
 
     // ── Step 3: Generate internal token for worker calls ─────────────────
     const internalToken = generateInternalJWT({
@@ -76,26 +76,31 @@ async function execute({ message, sessionId, userId }) {
           applicant  = res.customer;
         }
 
-        if (!applicant) {
+        const extracted = _extractLoanDetails(cleanMessage);
+        const monthlyIncome = applicant ? applicant.monthlyIncome : extracted.income;
+        const employmentType = applicant ? applicant.employmentType : extracted.employment;
+        const existingEMI = applicant ? applicant.existingEMI : extracted.emi;
+        const requestedAmount = extracted.amount || (monthlyIncome ? monthlyIncome * 6 : null);
+
+        if (!applicant && (!monthlyIncome || !employmentType)) {
           rawReply = `To check your loan eligibility, I'll need a few details:\n\n• Your monthly income\n• Employment type (Salaried / Self-Employed / Contract)\n• Existing EMI obligations\n• Desired loan amount\n\nPlease share these or provide your registered phone number.`;
           break;
         }
 
-        // Run underwriting
         const uwResult = await UnderwritingAgent.execute({
-          applicantId:     applicant.customerId,
+          applicantId:     applicant ? applicant.customerId : uuidv4(),
           pan:             'MOCK_PAN', // In production, retrieved from secure store
-          monthlyIncome:   applicant.monthlyIncome,
-          requestedAmount: _extractAmount(cleanMessage) || applicant.monthlyIncome * 6,
-          employmentType:  applicant.employmentType,
-          existingEMI:     applicant.existingEMI,
+          monthlyIncome,
+          requestedAmount,
+          employmentType,
+          existingEMI,
         });
         agentUsed.push('UnderwritingAgent');
         decision       = uwResult.decision;
         eligibleAmount = uwResult.eligibleAmount;
 
-        // If APPROVE → run compliance
-        if (decision === 'APPROVE') {
+        // If APPROVE → run compliance (only if it's a registered user)
+        if (decision === 'APPROVE' && applicant) {
           const compliance = await ComplianceAgent.execute({
             applicantId: applicant.customerId,
             kycDocs:     applicant.kycStatus === 'COMPLETE' ? ['AADHAAR', 'PAN'] : [],
@@ -138,8 +143,18 @@ async function execute({ message, sessionId, userId }) {
         break;
       }
 
+      case 'GENERAL_QUERY': {
+        rawReply = answer || `I can help with general finance and loan queries. How can I assist you?`;
+        agentUsed.push('LLMAgent');
+        break;
+      }
+
       default: {
-        rawReply = `I'm here to help with TrustFlow Finance services:\n\n• 💰 **Loan Eligibility** — Check if you qualify\n• 📱 **EMI Calculator** — Calculate monthly payments\n• 📄 **Document Upload** — Submit your KYC docs\n• 🔍 **Application Status** — Track your loan\n\nHow can I assist you?`;
+        if (answer) {
+          rawReply = answer;
+        } else {
+          rawReply = `I'm here to help with TrustFlow Finance services:\n\n• 💰 **Loan Eligibility** — Check if you qualify\n• 📱 **EMI Calculator** — Calculate monthly payments\n• 📄 **Document Upload** — Submit your KYC docs\n• 🔍 **Application Status** — Track your loan\n\nHow can I assist you?`;
+        }
       }
     }
 
@@ -235,14 +250,60 @@ function _calculateEMI(text) {
   return { principal: p, rate: annualRate, tenure: n, emi, totalInterest, totalPayable };
 }
 
+function _extractLoanDetails(text) {
+  let income = null;
+  let employment = null;
+  let emi = 0;
+  let amount = null;
+
+  // Amount - try to find it near 'loan' or 'amount' first
+  const loanMatch = text.match(/(?:loan|borrow|amount).{0,15}?(?:rs\.?|inr|₹)?\s*(\d[\d,]+(?:k|lakh|crore)?)/i);
+  if (loanMatch) {
+    amount = _extractAmount(loanMatch[1]) || _extractAmount(text);
+  } else {
+    amount = _extractAmount(text);
+  }
+
+  // Income
+  const incomeMatch = text.match(/(?:earn|income|salary|make|getting).{0,15}?(?:rs\.?|inr|₹)?\s*(\d[\d,]+)/i);
+  if (incomeMatch) {
+    income = parseFloat(incomeMatch[1].replace(/,/g, ''));
+  } else {
+    const pmMatch = text.match(/(\d[\d,]+)\s*(?:rs\.?|inr|₹)?\s*(?:per month|p\.m\.|a month|monthly)/i);
+    if (pmMatch) income = parseFloat(pmMatch[1].replace(/,/g, ''));
+  }
+
+  // Avoid amount == income overlapping
+  if (amount === income && text.match(/\d/g).length > 5) {
+     // fallback if same number extracted
+     amount = null; // will be defaulted to income * 6
+  }
+
+  // EMI
+  const emiMatch = text.match(/(?:emi|paying).{0,15}?(?:rs\.?|inr|₹)?\s*(\d[\d,]+)/i);
+  if (emiMatch) {
+    emi = parseFloat(emiMatch[1].replace(/,/g, ''));
+  }
+
+  // Employment
+  if (text.match(/self\s*[- ]?employed|business/i)) employment = 'SELF_EMPLOYED';
+  else if (text.match(/contract|freelance/i)) employment = 'CONTRACT';
+  else if (text.match(/salaried|salary|job/i)) employment = 'SALARIED';
+
+  return { income, employment, emi, amount };
+}
+
 function _buildLoanReply(decision, eligibleAmount, uwResult) {
+  if (decision === 'ERROR') {
+    return `We encountered an issue checking your eligibility: ${uwResult.error || 'Unknown error'}. Please try again later.`;
+  }
   if (decision === 'APPROVE') {
     return `Great news! Based on your profile, you are **Pre-Approved** for a loan of ${formatINR(eligibleAmount)}.\n\nThis is subject to document verification. Would you like to proceed with the application?`;
   }
   if (decision === 'MANUAL_REVIEW') {
     return `Your application requires a manual review by our team. We will contact you within 24 business hours with a decision.\n\nReason: ${uwResult.reasonMessage}`;
   }
-  return `We're unable to proceed with your loan application at this time.\n\nReason: ${uwResult.reasonMessage}\n\nFor assistance, you can speak with an advisor.`;
+  return `We're unable to proceed with your loan application at this time.\n\nReason: ${uwResult.reasonMessage || 'Not eligible'}\n\nFor assistance, you can speak with an advisor.`;
 }
 
 module.exports = { execute };
