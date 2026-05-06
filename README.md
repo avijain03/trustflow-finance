@@ -266,6 +266,10 @@ CREDIT_BUREAU_API_URL=https://mock-credit-bureau.example.com/v1
 CREDIT_BUREAU_API_KEY=dev_mock_key
 CRM_API_URL=https://mock-crm.example.com/v1
 CRM_API_KEY=dev_mock_key
+
+# ── LLM Configuration (Intent Parser) ──────────────────────────
+GEMINI_API_KEY=your_gemini_api_key_here
+OLLAMA_MODEL=mistral:latest
 ```
 
 > **Generate cryptographically strong secrets:**
@@ -275,6 +279,25 @@ CRM_API_KEY=dev_mock_key
 > Run twice — use one value for `JWT_SECRET` and the other for `INTERNAL_JWT_SECRET`.
 
 > **Tip:** Keeping `MONGODB_URI=placeholder` tells the backend to auto-spin an in-memory MongoDB instance (binary downloaded once, ~510 MB). No Atlas account required for local dev.
+
+### 🤖 LLM Model Selection
+
+The application uses an intent parser that can dynamically switch between LLMs based on your configuration in `backend/.env`.
+
+1. **Gemini API (Cloud):** Set `GEMINI_API_KEY=your_api_key` in `backend/.env`. The application will use Google's Gemini-1.5-Flash model which provides very fast responses.
+2. **Ollama (Local):** If no Gemini key is found, it falls back to your local Ollama instance. You can configure which local model to use by setting `OLLAMA_MODEL=mistral:latest` (or `llama3`, `qwen2.5:0.5b`, etc.).
+3. **Basic Fallback:** If both Gemini and Ollama are unavailable or timeout, the system automatically falls back to a fast, reliable hardcoded Regex intent parser.
+
+---
+
+### 📝 Changelog
+
+**v2.0.1 (Latest Updates)**
+- **LLM Cascade System:** Integrated Gemini API with local Ollama fallback and Regex fallback for intent parsing.
+- **Configurable Models:** Added `GEMINI_API_KEY` and `OLLAMA_MODEL` to `.env` for easy model selection.
+- **Improved Timeout Handling:** Increased frontend Axios timeout from 30s to 120s to allow local LLMs more time to generate responses.
+- **Guest Underwriting:** Improved `MasterAgent` to automatically extract loan details directly from user chat messages for guest users, avoiding prompt loops.
+- **Zod Validation Fix:** Replaced hardcoded `GUEST_USER` with `uuidv4()` to pass strict backend Zod validations and prevent `undefined` reason messages on rejected loans.
 
 ---
 
