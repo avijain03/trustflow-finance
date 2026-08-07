@@ -16,16 +16,15 @@ export default function AgentStatusBar() {
 
   return (
     <header className="glass-bar" style={{
-      position:   'fixed',
+      position:   'sticky',
       top:        0,
-      left:       0,
-      right:      0,
       height:     '56px',
       display:    'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding:    '0 1.25rem',
       zIndex:     'var(--z-topbar)',
+      flexShrink: 0,
     }}>
       {/* ── Left: Brand ─────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>

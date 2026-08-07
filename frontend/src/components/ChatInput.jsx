@@ -1,10 +1,17 @@
-// Purpose: ChatInput — fixed bottom bar with auto-resize textarea, send, file upload, char counter
+// Purpose: ChatInput — bottom bar with quick-tap suggestion pills, auto-resize textarea, send + file upload
 import React, { useRef, useState, useCallback } from 'react';
 import useChatStore from '../store/chatStore';
 
-const MAX_CHARS   = 2000;
-const WARN_CHARS  = 1800;
-const DOC_TYPES   = ['SALARY_SLIP', 'BANK_STATEMENT', 'AADHAAR', 'PAN', 'ITR'];
+const MAX_CHARS  = 2000;
+const WARN_CHARS = 1800;
+
+/* ── Quick-tap suggestion buttons ─────────────────────────────────────────── */
+const QUICK_TAPS = [
+  '₹2L – ₹5L',
+  '₹5L – ₹10L',
+  'Check Eligibility',
+  'Calculate EMI',
+];
 
 export default function ChatInput() {
   const [text, setText]   = useState('');
@@ -12,12 +19,12 @@ export default function ChatInput() {
   const fileInputRef      = useRef(null);
   const { sendMessage, uploadDocument, isTyping } = useChatStore();
 
-  /* ── Auto-resize textarea ────────────────────────────────────── */
+  /* ── Auto-resize textarea ─────────────────────────────────────────────── */
   const adjustHeight = useCallback(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 4 * 24 + 32) + 'px'; // max 4 lines
+    el.style.height = Math.min(el.scrollHeight, 4 * 24 + 32) + 'px';
   }, []);
 
   const onChange = (e) => {
@@ -27,10 +34,11 @@ export default function ChatInput() {
     }
   };
 
-  /* ── Send message ────────────────────────────────────────────── */
-  const onSend = useCallback(() => {
-    if (!text.trim() || isTyping) return;
-    sendMessage(text.trim());
+  /* ── Send message ─────────────────────────────────────────────────────── */
+  const onSend = useCallback((msg) => {
+    const payload = (typeof msg === 'string' ? msg : text).trim();
+    if (!payload || isTyping) return;
+    sendMessage(payload);
     setText('');
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   }, [text, isTyping, sendMessage]);
@@ -42,27 +50,68 @@ export default function ChatInput() {
     }
   };
 
-  /* ── File upload ─────────────────────────────────────────────── */
+  /* ── File upload ──────────────────────────────────────────────────────── */
   const onFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    uploadDocument(file, 'SALARY_SLIP'); // Default to salary slip
+    uploadDocument(file, 'SALARY_SLIP');
     e.target.value = '';
   };
 
-  const charWarn  = text.length >= WARN_CHARS;
-  const canSend   = text.trim().length > 0 && !isTyping;
+  const charWarn = text.length >= WARN_CHARS;
+  const canSend  = text.trim().length > 0 && !isTyping;
 
   return (
-    <footer className="glass-bar" style={{
-      position:    'fixed',
-      bottom:      0,
-      left:        0,
-      right:       0,
-      padding:     '0.75rem 1rem',
-      zIndex:      'var(--z-topbar)',
+    <footer style={{
+      padding:    '0.5rem 1rem 0.875rem',
+      flexShrink: 0,
+      borderTop:  '1px solid rgba(148,163,184,0.08)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.625rem', maxWidth: '900px', margin: '0 auto' }}>
+
+      {/* ── Quick-tap suggestion pills ───────────────────────────────── */}
+      <div style={{
+        display:        'flex',
+        flexWrap:       'wrap',
+        gap:            '0.375rem',
+        marginBottom:   '0.625rem',
+      }}>
+        {QUICK_TAPS.map((label) => (
+          <button
+            key={label}
+            onClick={() => onSend(label)}
+            disabled={isTyping}
+            style={{
+              padding:      '0.25rem 0.75rem',
+              fontSize:     'var(--text-xs)',
+              fontFamily:   'var(--font-body)',
+              fontWeight:   500,
+              color:        '#94a3b8',
+              background:   'transparent',
+              border:       '1px solid rgba(99,102,241,0.4)',
+              borderRadius: '9999px',
+              cursor:       'pointer',
+              transition:   'all 150ms ease',
+              lineHeight:   1.5,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#6366f1';
+              e.currentTarget.style.color       = '#f1f5f9';
+              e.currentTarget.style.background  = 'rgba(99,102,241,0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(99,102,241,0.4)';
+              e.currentTarget.style.color       = '#94a3b8';
+              e.currentTarget.style.background  = 'transparent';
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Input row ────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.625rem' }}>
+
         {/* Attach button */}
         <button
           className="btn-ghost glow-target"
@@ -87,20 +136,20 @@ export default function ChatInput() {
             rows={1}
             className="input-glass"
             style={{
-              resize:         'none',
-              paddingRight:   '4rem',
-              overflowY:      'auto',
-              lineHeight:     '1.5',
-              minHeight:      '44px',
+              resize:       'none',
+              paddingRight: '4rem',
+              overflowY:    'auto',
+              lineHeight:   '1.5',
+              minHeight:    '44px',
             }}
           />
           {/* Char counter */}
           <span style={{
-            position:   'absolute',
-            bottom:     '0.5rem',
-            right:      '0.75rem',
-            fontSize:   'var(--text-xs)',
-            color:      charWarn ? 'var(--color-danger)' : 'var(--color-text-muted)',
+            position:  'absolute',
+            bottom:    '0.5rem',
+            right:     '0.75rem',
+            fontSize:  'var(--text-xs)',
+            color:     charWarn ? 'var(--color-danger)' : 'var(--color-text-muted)',
           }}>
             {text.length}/{MAX_CHARS}
           </span>
@@ -109,7 +158,7 @@ export default function ChatInput() {
         {/* Send button */}
         <button
           className={canSend ? 'btn-emerald glow-target' : 'btn-ghost'}
-          onClick={onSend}
+          onClick={() => onSend()}
           disabled={!canSend}
           style={{ flexShrink: 0, padding: '0.625rem 1rem', minWidth: '56px' }}
           title="Send (Enter)"
