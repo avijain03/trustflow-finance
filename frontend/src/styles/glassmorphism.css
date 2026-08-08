@@ -110,8 +110,15 @@
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
 
-.btn-emerald:active { transform: translateY(0); }
-.btn-emerald:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-emerald:active {
+  transform: translateY(0);
+}
+
+.btn-emerald:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
 
 .btn-indigo {
   display: inline-flex;
@@ -137,8 +144,15 @@
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
 
-.btn-indigo:active { transform: translateY(0); }
-.btn-indigo:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-indigo:active {
+  transform: translateY(0);
+}
+
+.btn-indigo:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
 
 .btn-ghost {
   display: inline-flex;
@@ -210,8 +224,18 @@
 
 /* ─── Typing Indicator Dots ───────────────────────────────────────────────── */
 @keyframes typing-bounce {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30%           { transform: translateY(-6px); opacity: 1; }
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
 }
 
 .typing-dot {
@@ -221,8 +245,14 @@
   background: var(--color-accent-indigo);
   animation: typing-bounce 1.2s ease-in-out infinite;
 }
-.typing-dot:nth-child(2) { animation-delay: 150ms; }
-.typing-dot:nth-child(3) { animation-delay: 300ms; }
+
+.typing-dot:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 300ms;
+}
 
 /* ─── Progress Bar ────────────────────────────────────────────────────────── */
 .progress-track {
@@ -261,8 +291,15 @@
 
 /* ─── Online Indicator Pulse ──────────────────────────────────────────────── */
 @keyframes pulse-ring {
-  0%   { transform: scale(1); opacity: 0.6; }
-  100% { transform: scale(2.5); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
 }
 
 .online-dot {
@@ -297,7 +334,9 @@
   transition: border var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.input-glass::placeholder { color: var(--color-text-muted); }
+.input-glass::placeholder {
+  color: var(--color-text-muted);
+}
 
 .input-glass:focus {
   border-color: var(--color-accent-indigo);
@@ -310,16 +349,29 @@
 }
 
 /* ─── Scroll utility ──────────────────────────────────────────────────────── */
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 /* ─── Animations ──────────────────────────────────────────────────────────── */
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+  from {
+    opacity: 0;
+  }
 
+  to {
+    opacity: 1;
+  }
+}
