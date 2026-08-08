@@ -240,26 +240,23 @@
   transition: width var(--transition-slow);
 }
 
-/* ─── Animated Gradient Border (GreetingBanner) ───────────────────────────── */
-@keyframes rotate-gradient {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
+/* ─── Stable Gradient Border (GreetingBanner) ───────────────────────────── */
 .animated-border {
   position: relative;
   isolation: isolate;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid rgba(99, 102, 241, 0.35);
 }
 
 .animated-border::before {
   content: '';
   position: absolute;
-  inset: -1px;
+  inset: 0;
   border-radius: inherit;
-  background: conic-gradient(from 0deg, var(--color-accent-emerald), var(--color-accent-indigo), var(--color-accent-emerald));
-  animation: rotate-gradient 4s linear infinite;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(99, 102, 241, 0.18));
   z-index: -1;
-  opacity: 0.6;
+  opacity: 0.8;
 }
 
 /* ─── Online Indicator Pulse ──────────────────────────────────────────────── */
