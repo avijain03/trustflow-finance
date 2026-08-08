@@ -1,7 +1,12 @@
 // Purpose: Centralised environment variable loader — strict in production, lenient in dev
 'use strict';
 
-require('dotenv').config();
+const path = require('path');
+const dotenv = require('dotenv');
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config();
 
 const REQUIRED_PROD = [
   'MONGODB_URI',
@@ -11,12 +16,12 @@ const REQUIRED_PROD = [
 ];
 
 const DEFAULTS = {
-  PORT:                    '5000',
-  NODE_ENV:                'development',
-  JWT_EXPIRY:              '7d',
-  INTERNAL_JWT_EXPIRY:     '60',
-  RATE_LIMIT_WINDOW_MS:    '900000',
-  RATE_LIMIT_MAX:          '100',
+  PORT: '5000',
+  NODE_ENV: 'development',
+  JWT_EXPIRY: '7d',
+  INTERNAL_JWT_EXPIRY: '60',
+  RATE_LIMIT_WINDOW_MS: '900000',
+  RATE_LIMIT_MAX: '100',
 };
 
 /**

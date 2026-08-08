@@ -1,7 +1,12 @@
 // Purpose: Server entry point — connects DB, then starts HTTP listener
 'use strict';
 
-require('dotenv').config();
+const path = require('path');
+const dotenv = require('dotenv');
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config();
 
 const { validateEnv } = require('./config/env');
 const { connectDB }   = require('./config/db');

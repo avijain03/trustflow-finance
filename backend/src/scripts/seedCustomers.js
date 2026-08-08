@@ -1,7 +1,11 @@
 // Purpose: Seed script — idempotent seeding of 10 TrustFlow Finance test customers
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '../../..', '.env') });
+const path = require('path');
+const dotenv = require('dotenv');
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../..', '.env') });
+dotenv.config();
 
 const { connectDB, disconnectDB } = require('../config/db');
 const Customer     = require('../models/Customer.model');
