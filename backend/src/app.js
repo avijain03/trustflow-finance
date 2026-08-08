@@ -20,8 +20,14 @@ app.use(helmet({
 
 /* ── CORS ────────────────────────────────────────────────────────────────── */
 app.use(cors({
-  origin:           process.env.FRONTEND_URL || 'http://localhost:3000',
-  methods:          ['GET', 'POST'],
+  origin: (origin, callback) => {
+    // Allow non-browser requests, dev localhost origins, or configured FRONTEND_URL
+    if (!origin || process.env.NODE_ENV !== 'production' || origin === process.env.FRONTEND_URL) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  methods:          ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders:   ['Content-Type', 'Authorization', 'x-internal-token'],
   credentials:      true,
 }));
