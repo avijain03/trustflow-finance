@@ -24,9 +24,14 @@ axiosInstance.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
-      // Clear session and redirect to login
-      sessionStorage.clear();
-      window.location.href = '/login';
+      const url = error.config?.url || '';
+      const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/register');
+
+      if (!isAuthRoute) {
+        // Clear session and redirect to login only for non-auth protected routes
+        sessionStorage.clear();
+        window.location.href = '/login';
+      }
     }
 
     if (status === 429) {

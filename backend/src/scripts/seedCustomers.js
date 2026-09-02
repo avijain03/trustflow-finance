@@ -9,6 +9,8 @@ dotenv.config();
 
 const { connectDB, disconnectDB } = require('../config/db');
 const Customer     = require('../models/Customer.model');
+const User         = require('../models/User.model');
+const argon2       = require('argon2');
 const { hashPII }  = require('../utils/hashPII');
 
 /* ─── Customer Profiles (cover all underwriting rule branches) ──────────── */
@@ -35,19 +37,28 @@ const CUSTOMERS = [
 ];
 
 /**
- * seedCustomers — Drop and recreate the Customer collection with 10 test profiles.
+ * seedCustomers — Drop and recreate Customer & User collections with 10 test profiles.
  * Each customer's PAN and Aadhaar are hashed with argon2id before insertion.
+ * Matching User accounts are created with password 'Password123!'.
  *
  * @param {{ silent?: boolean }} [opts]
  */
 async function seedCustomers(opts = {}) {
   const log = opts.silent ? () => {} : console.log;
 
-  log('\n[SEED] 🌱 Seeding TrustFlow Finance customers...');
+  log('\n[SEED] 🌱 Seeding TrustFlow Finance customers and users...');
 
   // Drop existing data (idempotent)
   await Customer.deleteMany({});
-  log('[SEED] Cleared existing customers');
+  await User.deleteMany({});
+  log('[SEED] Cleared existing customers and users');
+
+  const defaultPasswordHash = await argon2.hash('Password123!', {
+    type:        argon2.argon2id,
+    timeCost:    3,
+    memoryCost:  65536,
+    parallelism: 1,
+  });
 
   for (const c of CUSTOMERS) {
     const panHash     = await hashPII(c.pan);
@@ -65,10 +76,17 @@ async function seedCustomers(opts = {}) {
       kycStatus:      'INCOMPLETE',
     });
 
+    await User.create({
+      name:         c.name,
+      phone:        c.phone,
+      passwordHash: defaultPasswordHash,
+      role:         'user',
+    });
+
     log(`[SEED] ✅ ${c.name.padEnd(20)} | ${c.employmentType.padEnd(12)} | Income: ₹${c.monthlyIncome.toLocaleString('en-IN')} | Expected: ${c.expectedDecision}`);
   }
 
-  log(`\n[SEED] 🎉 Seeded ${CUSTOMERS.length} customers successfully\n`);
+  log(`\n[SEED] 🎉 Seeded ${CUSTOMERS.length} customers & users successfully (Default Password: Password123!)\n`);
 }
 
 /* ─── Run directly: node src/scripts/seedCustomers.js ───────────────────── */

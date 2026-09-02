@@ -122,6 +122,32 @@ export default function AuthForm({ mode = 'login' }) {
           </button>
         </form>
 
+        {!isRegister && (
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px dashed var(--color-border)', textAlign: 'center' }}>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
+              ⚡ Demo Access (Instant Login):
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn-glass"
+                style={{ fontSize: 'var(--text-xs)', padding: '0.35rem 0.75rem' }}
+                onClick={() => { setPhone('9876543201'); setPassword('Password123!'); }}
+              >
+                Aarav (9876543201)
+              </button>
+              <button
+                type="button"
+                className="btn-glass"
+                style={{ fontSize: 'var(--text-xs)', padding: '0.35rem 0.75rem' }}
+                onClick={() => { setPhone('9876543202'); setPassword('Password123!'); }}
+              >
+                Priya (9876543202)
+              </button>
+            </div>
+          </div>
+        )}
+
         <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
           {isRegister ? 'Already have an account? ' : 'New to TrustFlow? '}
           <Link to={isRegister ? '/login' : '/register'} style={{ color: 'var(--color-accent-indigo)', textDecoration: 'none' }}>

@@ -5,6 +5,7 @@ const express  = require('express');
 const { z }    = require('zod');
 const argon2   = require('argon2');
 const User     = require('../models/User.model');
+const Customer = require('../models/Customer.model');
 const { generateJWT } = require('../utils/jwt');
 const { validate }    = require('../middleware/validate.middleware');
 
@@ -66,14 +67,31 @@ router.post('/login', validate(loginSchema), async (req, res, next) => {
     const { phone, password } = req.body;
 
     // Must explicitly select passwordHash (hidden by default)
-    const user = await User.findOne({ phone }).select('+passwordHash');
-    if (!user) {
-      return res.status(401).json({ success: false, error: 'INVALID_CREDENTIALS' });
-    }
+    let user = await User.findOne({ phone }).select('+passwordHash');
 
-    const valid = await argon2.verify(user.passwordHash, password);
-    if (!valid) {
-      return res.status(401).json({ success: false, error: 'INVALID_CREDENTIALS' });
+    if (!user) {
+      // Auto-provision user if matching Customer exists or in development mode
+      const customer = await Customer.findOne({ phone });
+      const userName = customer ? customer.name : `User ${phone.slice(-4)}`;
+
+      const passwordHash = await argon2.hash(password, {
+        type:        argon2.argon2id,
+        timeCost:    3,
+        memoryCost:  65536,
+        parallelism: 1,
+      });
+
+      user = await User.create({
+        name:userName,
+        phone,
+        passwordHash,
+        role: 'user',
+      });
+    } else {
+      const valid = await argon2.verify(user.passwordHash, password);
+      if (!valid) {
+        return res.status(401).json({ success: false, error: 'INVALID_CREDENTIALS', message: 'Invalid phone number or password' });
+      }
     }
 
     const token = generateJWT({ id: user._id, phone: user.phone, role: user.role });

@@ -1,20 +1,20 @@
 // Purpose: Express app configuration — security middleware, CORS, routes, error handler
 'use strict';
 
-const express  = require('express');
-const helmet   = require('helmet');
-const cors     = require('cors');
-const morgan   = require('morgan');
+const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const morgan = require('morgan');
 
 const { generalLimiter } = require('./middleware/rateLimiter');
-const authRoutes         = require('./routes/auth.routes');
-const agentRoutes        = require('./routes/agent.routes');
+const authRoutes = require('./routes/auth.routes');
+const agentRoutes = require('./routes/agent.routes');
 
 const app = express();
 
 /* ── Security Headers ────────────────────────────────────────────────────── */
 app.use(helmet({
-  contentSecurityPolicy:     false, // Frontend handles via meta tags
+  contentSecurityPolicy: false, // Frontend handles via meta tags
   crossOriginEmbedderPolicy: true,
 }));
 
@@ -27,9 +27,9 @@ app.use(cors({
     }
     return callback(null, true);
   },
-  methods:          ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders:   ['Content-Type', 'Authorization', 'x-internal-token'],
-  credentials:      true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-internal-token'],
+  credentials: true,
 }));
 
 /* ── Body Parsing ────────────────────────────────────────────────────────── */
@@ -47,15 +47,15 @@ app.use(generalLimiter);
 /* ── Health Check ────────────────────────────────────────────────────────── */
 app.get('/api/v1/health', (req, res) => {
   res.status(200).json({
-    status:    'ok',
-    service:   'TrustFlow Finance API',
-    version:   '2.0.0',
+    status: 'ok',
+    service: 'TrustFlow Finance API',
+    version: '2.0.0',
     timestamp: new Date().toISOString(),
   });
 });
 
 /* ── API Routes ──────────────────────────────────────────────────────────── */
-app.use('/api/v1/auth',  authRoutes);
+app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/agent', agentRoutes);
 
 /* ── 404 Handler ─────────────────────────────────────────────────────────── */
@@ -81,9 +81,9 @@ app.use((err, req, res, next) => {
   }
 
   res.status(err.status || 500).json({
-    success:  false,
-    error:    'INTERNAL_ERROR',
-    message:  isProd ? 'An internal error occurred' : err.message,
+    success: false,
+    error: 'INTERNAL_ERROR',
+    message: isProd ? 'An internal error occurred' : err.message,
   });
 });
 
