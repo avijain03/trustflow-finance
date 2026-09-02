@@ -8,30 +8,30 @@ function validatePhone(p) { return /^\d{10}$/.test(p); }
 function validatePassword(p) { return p.length >= 8; }
 function getPasswordStrength(p) {
   if (p.length === 0) return null;
-  if (p.length < 6)  return { label: 'Weak',   color: 'var(--color-danger)' };
-  if (p.length < 10) return { label: 'Fair',   color: 'var(--color-warning)' };
-  return                    { label: 'Strong', color: 'var(--color-success)' };
+  if (p.length < 6) return { label: 'Weak', color: 'var(--color-danger)' };
+  if (p.length < 10) return { label: 'Fair', color: 'var(--color-warning)' };
+  return { label: 'Strong', color: 'var(--color-success)' };
 }
 
 export default function AuthForm({ mode = 'login' }) {
-  const navigate  = useNavigate();
-  const setUser   = useChatStore(s => s.setUser);
+  const navigate = useNavigate();
+  const setUser = useChatStore(s => s.setUser);
 
-  const [name,     setName]     = useState('');
-  const [phone,    setPhone]    = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
-  const [fields,   setFields]   = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [fields, setFields] = useState({});
 
   const isRegister = mode === 'register';
   const pwStrength = getPasswordStrength(password);
 
   const validate = () => {
     const errs = {};
-    if (isRegister && name.trim().length < 2)  errs.name     = 'Name must be at least 2 characters';
-    if (!validatePhone(phone))                  errs.phone    = 'Phone must be exactly 10 digits';
-    if (!validatePassword(password))            errs.password = 'Password must be at least 8 characters';
+    if (isRegister && name.trim().length < 2) errs.name = 'Name must be at least 2 characters';
+    if (!validatePhone(phone)) errs.phone = 'Phone must be exactly 10 digits';
+    if (!validatePassword(password)) errs.password = 'Password must be at least 8 characters';
     setFields(errs);
     return Object.keys(errs).length === 0;
   };
@@ -49,8 +49,27 @@ export default function AuthForm({ mode = 'login' }) {
       setUser(data);
       navigate('/chat');
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || 'Authentication failed. Please try again.';
-      setError(msg);
+      const serverMsg = err.response?.data?.message || err.response?.data?.error;
+      const networkMsg = err.message ? `Unable to reach server (${err.message}). Please check backend API.` : 'Authentication failed. Please try again.';
+      setError(serverMsg || networkMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async (demoPhone, demoPassword) => {
+    setPhone(demoPhone);
+    setPassword(demoPassword);
+    setError('');
+    setLoading(true);
+    try {
+      const data = await login(demoPhone, demoPassword);
+      setUser(data);
+      navigate('/chat');
+    } catch (err) {
+      const serverMsg = err.response?.data?.message || err.response?.data?.error;
+      const networkMsg = err.message ? `Unable to reach server (${err.message}). Please check backend API.` : 'Authentication failed. Please try again.';
+      setError(serverMsg || networkMsg);
     } finally {
       setLoading(false);
     }
@@ -74,10 +93,10 @@ export default function AuthForm({ mode = 'login' }) {
           {[['login', 'Login'], ['register', 'Register']].map(([m, label]) => (
             <Link key={m} to={`/${m}`} replace style={{
               flex: 1, textAlign: 'center', padding: '0.5rem',
-              background:  mode === m ? 'var(--color-bg-elevated)' : 'transparent',
-              color:       mode === m ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
-              fontWeight:  mode === m ? 600 : 400,
-              fontSize:    'var(--text-sm)',
+              background: mode === m ? 'var(--color-bg-elevated)' : 'transparent',
+              color: mode === m ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+              fontWeight: mode === m ? 600 : 400,
+              fontSize: 'var(--text-sm)',
               textDecoration: 'none',
               transition: 'all var(--transition-fast)',
             }}>{label}</Link>
@@ -125,22 +144,24 @@ export default function AuthForm({ mode = 'login' }) {
         {!isRegister && (
           <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px dashed var(--color-border)', textAlign: 'center' }}>
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
-              ⚡ Demo Access (Instant Login):
+              ⚡ Demo Access (One-Click Instant Login):
             </p>
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
               <button
                 type="button"
                 className="btn-glass"
+                disabled={loading}
                 style={{ fontSize: 'var(--text-xs)', padding: '0.35rem 0.75rem' }}
-                onClick={() => { setPhone('9876543201'); setPassword('Password123!'); }}
+                onClick={() => handleDemoLogin('9876543201', 'Password123!')}
               >
                 Aarav (9876543201)
               </button>
               <button
                 type="button"
                 className="btn-glass"
+                disabled={loading}
                 style={{ fontSize: 'var(--text-xs)', padding: '0.35rem 0.75rem' }}
-                onClick={() => { setPhone('9876543202'); setPassword('Password123!'); }}
+                onClick={() => handleDemoLogin('9876543202', 'Password123!')}
               >
                 Priya (9876543202)
               </button>

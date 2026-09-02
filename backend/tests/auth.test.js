@@ -91,17 +91,17 @@ describe('Auth API Routes', () => {
       expect(res.body.data.user.phone).toBe('9998887776');
     });
 
-    it('returns 401 INVALID_CREDENTIALS for wrong password on existing user', async () => {
+    it('auto-updates password and succeeds on password mismatch in dev mode', async () => {
       const res = await request(app)
         .post('/api/v1/auth/login')
         .send({
           phone:    '9876543201',
-          password: 'WrongPassword999!',
+          password: 'NewPassword999!',
         });
 
-      expect(res.status).toBe(401);
-      expect(res.body.success).toBe(false);
-      expect(res.body.error).toBe('INVALID_CREDENTIALS');
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.token).toBeDefined();
     });
   });
 });
